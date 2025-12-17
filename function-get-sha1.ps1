@@ -1,3 +1,5 @@
+#.\function-get-sha1.ps1
+
 function Get-SHA1 {
     param(
         [Parameter(Mandatory=$true)]
@@ -25,5 +27,3 @@ function Get-SHA1 {
 }
 
 Get-SHA1 "Hello, Git"
-
-#.\function-get-sha1.ps1

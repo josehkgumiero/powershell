@@ -1,0 +1,1 @@
+Get-Process | Sort-Object WorkingSet -Descending | Select-Object -First 20 | ConvertTo-Html | Out-File "command-convertto-html-get-process-sort-object-select-object-out-file.html"

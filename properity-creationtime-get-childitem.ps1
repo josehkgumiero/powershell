@@ -1,0 +1,1 @@
+(Get-ChildItem Random_File.txt).LastAccessTime

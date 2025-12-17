@@ -1,0 +1,1 @@
+Get-Process chrome | Get-Member

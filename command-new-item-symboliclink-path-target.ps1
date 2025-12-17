@@ -1,0 +1,1 @@
+New-Item -ItemType SymbolicLink -Path 'command-new-item-link' -Target 'command-new-item-path-directory-file'

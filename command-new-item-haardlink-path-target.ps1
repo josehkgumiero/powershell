@@ -1,0 +1,2 @@
+New-Item -Path 'command-new-item-haardlink-path-target-file.txt' -ItemType File -Value 'This is our original file'
+New-Item -ItemType HardLink -Path 'command-new-item-haardlink-path-target-hardlink.txt' -Target 'command-new-item-haardlink-path-target-file.txt'
