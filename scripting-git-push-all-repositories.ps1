@@ -45,6 +45,8 @@ foreach ($repo in $repositorios) {
         # Push para a branch atual
         git push -u origin main
         Write-Host "Commit e push realizados com sucesso!" -ForegroundColor Green
+        cd ..
+        cd '.\powershell\'
     }
     catch {
         Write-Host "Erro ao processar $repoPath" -ForegroundColor Red
