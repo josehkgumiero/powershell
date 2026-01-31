@@ -33,6 +33,7 @@ foreach ($repo in $repositorios) {
     $status
 
     if (-not $status) {
+        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
         Write-Host "Nenhuma alteração detectada." -ForegroundColor Green
         continue
     }
