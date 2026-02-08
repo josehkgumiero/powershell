@@ -3,12 +3,14 @@
     Automated Git commit and push for multiple repositories.
 
 .DESCRIPTION
-    This script scans a root directory, identifies Git repositories,
-    checks for uncommitted changes, and automatically performs
-    git add, commit, and push operations.
+    Scans a root directory, identifies Git repositories,
+    checks for uncommitted changes, and performs:
+    - git add
+    - git commit
+    - git push
 
-    Designed following software engineering best practices:
-    - Object-Oriented Design
+    The script follows software engineering best practices:
+    - Object-Oriented Programming
     - Centralized logging
     - Robust error handling
     - Clear separation of responsibilities
@@ -17,11 +19,11 @@
     José Henrique Krugner Gumiero
 
 .VERSION
-    1.0.0
+    1.1.0
 #>
 
 # =========================
-# Logger class
+# Logger Class
 # =========================
 class Logger {
 
@@ -65,7 +67,12 @@ class GitRepositoryProcessor {
 
     [void] ProcessAllRepositories() {
 
-        $this.Logger.Info("Starting repository scan at: $($this.RootDirectory)")
+        $this.Logger.Info("==========================================")
+        $this.Logger.Info("Starting repository scan")
+        $this.Logger.Info("Root directory: $($this.RootDirectory)")
+        $this.Logger.Info("Commit message:")
+        $this.Logger.Info("-> $($this.CommitMessage)")
+        $this.Logger.Info("==========================================")
 
         if (-not (Test-Path $this.RootDirectory)) {
             throw "Root directory not found: $($this.RootDirectory)"
@@ -77,11 +84,12 @@ class GitRepositoryProcessor {
             $this.ProcessSingleRepository($repo.FullName)
         }
 
-        $this.Logger.Info("Repository processing finished.")
+        $this.Logger.Info("Repository scan completed.")
     }
 
     [void] ProcessSingleRepository([string]$repoPath) {
 
+        $this.Logger.Info("------------------------------------------")
         $this.Logger.Info("Checking repository: $repoPath")
 
         # Validate Git repository
@@ -100,8 +108,7 @@ class GitRepositoryProcessor {
                 return
             }
 
-            $this.CommitAndPush()
-
+            $this.CommitAndPush($repoPath)
         }
         catch {
             $this.Logger.Error("Failed to process repository: $repoPath")
@@ -112,16 +119,19 @@ class GitRepositoryProcessor {
         }
     }
 
-    [void] CommitAndPush() {
+    [void] CommitAndPush([string]$repoPath) {
 
         try {
-            $this.Logger.Info("Changes detected. Executing git workflow...")
+            $this.Logger.Info("Changes detected.")
+            $this.Logger.Info("Using commit message:")
+            $this.Logger.Info("-> $($this.CommitMessage)")
 
             git add .
             git commit -m $this.CommitMessage
             git push -u origin main
 
-            $this.Logger.Info("Commit and push completed successfully.")
+            $this.Logger.Info("Commit and push completed successfully for:")
+            $this.Logger.Info("[OK] $repoPath")
         }
         catch {
             throw "Git operation failed: $($_.Exception.Message)"
@@ -143,9 +153,7 @@ try {
     # Initialize logger
     $logger = [Logger]::new("GitAutoCommit")
 
-    $logger.Info("==========================================")
     $logger.Info("Initializing automated Git commit process")
-    $logger.Info("Root directory: $rootDirectory")
 
     # Initialize processor
     $processor = [GitRepositoryProcessor]::new(
