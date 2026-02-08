@@ -1,57 +1,166 @@
-# Diretório raiz que contém os repositórios
-$diretorioRaiz = "c:\Users\User\Desktop"
-$diretorioRaiz
+<#
+.SYNOPSIS
+    Automated Git commit and push for multiple repositories.
 
-# Mensagem do commit (com data e hora)
-$commitMessage = "Atualização automática - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
-$commitMessage
+.DESCRIPTION
+    This script scans a root directory, identifies Git repositories,
+    checks for uncommitted changes, and automatically performs
+    git add, commit, and push operations.
 
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "Iniciando varredura em: $diretorioRaiz" -ForegroundColor Yellow
+    Designed following software engineering best practices:
+    - Object-Oriented Design
+    - Centralized logging
+    - Robust error handling
+    - Clear separation of responsibilities
 
-# Obtém dinamicamente todas as subpastas
-$repositorios = Get-ChildItem -Path $diretorioRaiz -Directory
-$repositorios
+.AUTHOR
+    José Henrique Krugner Gumiero
 
-foreach ($repo in $repositorios) {
+.VERSION
+    1.0.0
+#>
 
-    $repoPath = $repo.FullName
+# =========================
+# Logger class
+# =========================
+class Logger {
 
-    Write-Host "------------------------------------------" -ForegroundColor Cyan
-    Write-Host "Verificando: $repoPath" -ForegroundColor Yellow
+    [string]$Name
 
-    # Verifica se é um repositório Git
-    if (-not (Test-Path "$repoPath\.git")) {
-        Write-Host "Não é um repositório Git. Pulando..." -ForegroundColor DarkYellow
-        continue
+    Logger([string]$name) {
+        $this.Name = $name
     }
 
-    Set-Location $repoPath
-
-    # Verifica se há alterações (novos arquivos ou modificações)
-    $status = git status --porcelain
-    $status
-
-    if (-not $status) {
-        [Console]::OutputEncoding = [System.Text.Encoding]::UTF8
-        Write-Host "Nenhuma alteração detectada." -ForegroundColor Green
-        continue
+    [void] Info([string]$message) {
+        Write-Host "[INFO]  $message" -ForegroundColor Green
     }
 
-    try {
-        # Adiciona novos arquivos e alterações
-        git add .
-        # Commit
-        git commit -m "$commitMessage"
-        # Push para a branch atual
-        git push -u origin main
-        Write-Host "Commit e push realizados com sucesso!" -ForegroundColor Green
+    [void] Warn([string]$message) {
+        Write-Host "[WARN]  $message" -ForegroundColor Yellow
     }
-    catch {
-        Write-Host "Erro ao processar $repoPath" -ForegroundColor Red
-        Write-Host $_
+
+    [void] Error([string]$message) {
+        Write-Host "[ERROR] $message" -ForegroundColor Red
     }
 }
 
-Write-Host "==========================================" -ForegroundColor Cyan
-Write-Host "Processo finalizado para todos os repositórios." -ForegroundColor Green
+# =========================
+# Git Repository Processor
+# =========================
+class GitRepositoryProcessor {
+
+    [string]$RootDirectory
+    [string]$CommitMessage
+    [Logger]$Logger
+
+    GitRepositoryProcessor(
+        [string]$rootDirectory,
+        [string]$commitMessage,
+        [Logger]$logger
+    ) {
+        $this.RootDirectory = $rootDirectory
+        $this.CommitMessage = $commitMessage
+        $this.Logger = $logger
+    }
+
+    [void] ProcessAllRepositories() {
+
+        $this.Logger.Info("Starting repository scan at: $($this.RootDirectory)")
+
+        if (-not (Test-Path $this.RootDirectory)) {
+            throw "Root directory not found: $($this.RootDirectory)"
+        }
+
+        $repositories = Get-ChildItem -Path $this.RootDirectory -Directory
+
+        foreach ($repo in $repositories) {
+            $this.ProcessSingleRepository($repo.FullName)
+        }
+
+        $this.Logger.Info("Repository processing finished.")
+    }
+
+    [void] ProcessSingleRepository([string]$repoPath) {
+
+        $this.Logger.Info("Checking repository: $repoPath")
+
+        # Validate Git repository
+        if (-not (Test-Path "$repoPath\.git")) {
+            $this.Logger.Warn("Not a Git repository. Skipping.")
+            return
+        }
+
+        Push-Location $repoPath
+
+        try {
+            $status = git status --porcelain
+
+            if (-not $status) {
+                $this.Logger.Info("No changes detected.")
+                return
+            }
+
+            $this.CommitAndPush()
+
+        }
+        catch {
+            $this.Logger.Error("Failed to process repository: $repoPath")
+            $this.Logger.Error($_.Exception.Message)
+        }
+        finally {
+            Pop-Location
+        }
+    }
+
+    [void] CommitAndPush() {
+
+        try {
+            $this.Logger.Info("Changes detected. Executing git workflow...")
+
+            git add .
+            git commit -m $this.CommitMessage
+            git push -u origin main
+
+            $this.Logger.Info("Commit and push completed successfully.")
+        }
+        catch {
+            throw "Git operation failed: $($_.Exception.Message)"
+        }
+    }
+}
+
+# =========================
+# Script Entry Point
+# =========================
+try {
+
+    # Root directory containing repositories
+    [string]$rootDirectory = "C:\Users\User\Desktop"
+
+    # Dynamic commit message with timestamp
+    [string]$commitMessage = "Automated update - $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')"
+
+    # Initialize logger
+    $logger = [Logger]::new("GitAutoCommit")
+
+    $logger.Info("==========================================")
+    $logger.Info("Initializing automated Git commit process")
+    $logger.Info("Root directory: $rootDirectory")
+
+    # Initialize processor
+    $processor = [GitRepositoryProcessor]::new(
+        $rootDirectory,
+        $commitMessage,
+        $logger
+    )
+
+    # Run process
+    $processor.ProcessAllRepositories()
+
+    $logger.Info("==========================================")
+    $logger.Info("All repositories processed successfully.")
+
+}
+catch {
+    Write-Host "[FATAL] $($_.Exception.Message)" -ForegroundColor Red
+}
